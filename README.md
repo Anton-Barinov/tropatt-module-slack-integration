@@ -1,6 +1,6 @@
 # Slack Notifications
 
-Send TropaTT notifications to Slack channels via Incoming Webhooks (no public callback — shared-hosting friendly).
+Send TropaTT notifications to Slack channels via Incoming Webhooks. Subscribes to core events (tasks, projects, users, comments, files) and automatically sends notifications for matching rules.
 
 A module for the [TropaTT](https://github.com/Anton-Barinov/TropaTT) self-hosted CRM and work platform.
 
@@ -12,14 +12,14 @@ A module for the [TropaTT](https://github.com/Anton-Barinov/TropaTT) self-hosted
 
 ### About
 
-Send TropaTT notifications to Slack channels via Incoming Webhooks (no public callback — shared-hosting friendly).
+Send TropaTT notifications to Slack channels via Incoming Webhooks. Subscribes to core events (tasks, projects, users, comments, files) and automatically sends notifications for matching rules.
 
 ### Module info
 
 | Field | Value |
 |---|---|
 | Module | `crm.slack-integration` |
-| Version | `1.0.0` |
+| Version | `1.1.0` |
 | Category | Integration |
 | Core | `>=1.0.0` |
 | Required permissions | workflow.manage |
@@ -29,7 +29,7 @@ Send TropaTT notifications to Slack channels via Incoming Webhooks (no public ca
 
 1. In TropaTT open **Admin → Modules → Install**.
 2. Choose one of:
-   - **Install from URL:** `https://github.com/Anton-Barinov/tropatt-module-slack-integration/releases/download/v1.0.0/crm.slack-integration-1.0.0.zip`
+   - **Install from URL:** `https://github.com/Anton-Barinov/tropatt-module-slack-integration/releases/download/v1.1.0/crm.slack-integration-1.1.0.zip`
    - **Upload archive:** download the release `.zip` and upload it manually.
 3. Activate the module and configure it in **Admin → Modules**.
 
@@ -51,14 +51,14 @@ Send TropaTT notifications to Slack channels via Incoming Webhooks (no public ca
 
 ### О модуле
 
-Отправка уведомлений TropaTT в Slack-каналы через Incoming Webhooks (без публичного callback — подходит для shared-хостинга)
+Отправка уведомлений TropaTT в Slack-каналы через Incoming Webhooks. Подписывается на события ядра (задачи, проекты, пользователи, комментарии, файлы) и автоматически отправляет уведомления по правилам.
 
 ### Информация о модуле
 
 | Поле | Значение |
 |---|---|
 | Модуль | `crm.slack-integration` |
-| Версия | `1.0.0` |
+| Версия | `1.1.0` |
 | Категория | Интеграция |
 | Ядро | `>=1.0.0` |
 | Требуемые права | workflow.manage |
@@ -68,7 +68,7 @@ Send TropaTT notifications to Slack channels via Incoming Webhooks (no public ca
 
 1. В TropaTT откройте **Админ → Модули → Установка**.
 2. Выберите один из вариантов:
-   - **Установка по URL:** `https://github.com/Anton-Barinov/tropatt-module-slack-integration/releases/download/v1.0.0/crm.slack-integration-1.0.0.zip`
+   - **Установка по URL:** `https://github.com/Anton-Barinov/tropatt-module-slack-integration/releases/download/v1.1.0/crm.slack-integration-1.1.0.zip`
    - **Загрузка архива:** скачайте `.zip` из релиза и загрузите вручную.
 3. Активируйте модуль и настройте его в **Админ → Модули**.
 
@@ -90,14 +90,14 @@ Send TropaTT notifications to Slack channels via Incoming Webhooks (no public ca
 
 ### 关于
 
-通过 Incoming Webhook 将 TropaTT 通知发送到 Slack 频道（无需公开回调，适合共享主机）。
+通过 Incoming Webhook 将 TropaTT 通知发送到 Slack 频道。订阅核心事件（任务、项目、用户、评论、文件）并根据规则自动发送通知。
 
 ### 模块信息
 
 | 字段 | 值 |
 |---|---|
 | 模块 | `crm.slack-integration` |
-| 版本 | `1.0.0` |
+| 版本 | `1.1.0` |
 | 类别 | 集成 |
 | 内核 | `>=1.0.0` |
 | 所需权限 | workflow.manage |
@@ -107,7 +107,7 @@ Send TropaTT notifications to Slack channels via Incoming Webhooks (no public ca
 
 1. 在 TropaTT 中打开 **管理 → 模块 → 安装**。
 2. 选择以下方式之一：
-   - **从 URL 安装：** `https://github.com/Anton-Barinov/tropatt-module-slack-integration/releases/download/v1.0.0/crm.slack-integration-1.0.0.zip`
+   - **从 URL 安装：** `https://github.com/Anton-Barinov/tropatt-module-slack-integration/releases/download/v1.1.0/crm.slack-integration-1.1.0.zip`
    - **上传压缩包：** 下载 release 中的 `.zip` 并手动上传。
 3. 在 **管理 → 模块** 中激活并配置模块。
 
