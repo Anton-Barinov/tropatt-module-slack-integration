@@ -40,7 +40,7 @@ final class SlackWorkerHandler
         $moduleAutoloader->registerModule('crm.slack-integration', 'crm');
         $moduleAutoloader->register();
 
-        $repo = new SlackRepository($pdo);
+        $repo = null;
         $client = new SlackClient(10);
 
         $maxRetries = 3;
@@ -49,7 +49,7 @@ final class SlackWorkerHandler
 
         for ($i = 0; $i < 50; $i++) {
             try {
-                $delivery = $repo->claimNextDelivery();
+                $delivery = SlackRepository::claimNextDeliveryForWorker($pdo);
             } catch (\Throwable $e) {
                 error_log('[SlackWorkerHandler] claim failed: ' . $e->getMessage());
                 break;
@@ -58,18 +58,23 @@ final class SlackWorkerHandler
                 break;
             }
 
+            $organizationId = (int)($delivery['organization_id'] ?? 0);
+            if ($organizationId <= 0) { continue; }
+            $repo = new SlackRepository($pdo, $organizationId);
             $publicId = (string)$delivery['public_id'];
+            $leaseToken = (string)($delivery['_lease_token'] ?? '');
+            if ($leaseToken === '') { continue; }
             $processed++;
 
             try {
                 $connection = $repo->getConnectionById((int)($delivery['connection_id'] ?? 0));
                 if (!$connection) {
-                    $repo->markFailed($publicId, 0, 'Connection not found', $maxRetries, $backoffSeconds);
+                    $repo->markFailed($publicId, $leaseToken, 0, 'Connection not found', $maxRetries, $backoffSeconds);
                     continue;
                 }
                 $webhookUrl = EncryptionService::decrypt((string)($connection['webhook_url_encrypted'] ?? ''));
                 if ($webhookUrl === null) {
-                    $repo->markFailed($publicId, 0, 'Failed to decrypt webhook URL', $maxRetries, $backoffSeconds);
+                    $repo->markFailed($publicId, $leaseToken, 0, 'Failed to decrypt webhook URL', $maxRetries, $backoffSeconds);
                     continue;
                 }
 
@@ -80,13 +85,13 @@ final class SlackWorkerHandler
 
                 $result = $client->send($webhookUrl, $payload);
                 if ($result['success']) {
-                    $repo->markDelivered($publicId, $result['response_code']);
+                    $repo->markDelivered($publicId, $leaseToken, $result['response_code']);
                 } else {
-                    $repo->markFailed($publicId, $result['response_code'], $result['message'], $maxRetries, $backoffSeconds);
+                    $repo->markFailed($publicId, $leaseToken, $result['response_code'], $result['message'], $maxRetries, $backoffSeconds);
                 }
             } catch (\Throwable $e) {
                 error_log('[SlackWorkerHandler] delivery ' . $publicId . ' failed: ' . $e->getMessage());
-                $repo->markFailed($publicId, 0, 'Delivery failed. Check server logs for details.', $maxRetries, $backoffSeconds);
+                $repo->markFailed($publicId, $leaseToken, 0, 'Delivery failed. Check server logs for details.', $maxRetries, $backoffSeconds);
             }
         }
 

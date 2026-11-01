@@ -22,19 +22,19 @@ final class SlackClient
     public static function validateWebhookUrl(string $url, array $allowedHosts): bool
     {
         $url = trim($url);
-        if (!preg_match('#^https://#i', $url)) {
+        $parts = parse_url($url);
+        if ($url === '' || !is_array($parts) || strtolower((string)($parts['scheme'] ?? '')) !== 'https') {
             return false;
         }
-        $host = strtolower((string)(parse_url($url, PHP_URL_HOST) ?: ''));
-        if ($host === '') {
+        $host = strtolower(rtrim((string)($parts['host'] ?? ''), '.'));
+        $path = (string)($parts['path'] ?? '');
+        if ($host === '' || isset($parts['user']) || isset($parts['pass']) || isset($parts['query']) || isset($parts['fragment']) || (isset($parts['port']) && (int)$parts['port'] !== 443)) {
             return false;
         }
         foreach ($allowedHosts as $allowed) {
-            $allowed = strtolower(trim($allowed));
-            if ($allowed === '') {
-                continue;
-            }
-            if ($host === $allowed || str_ends_with($host, '.' . ltrim($allowed, '.'))) {
+            $allowed = strtolower(rtrim(trim($allowed), '.'));
+            if ($allowed !== '' && hash_equals($allowed, $host)
+                && (str_starts_with($path, '/services/') || str_starts_with($path, '/workflows/'))) {
                 return true;
             }
         }
@@ -49,6 +49,9 @@ final class SlackClient
      */
     public function send(string $webhookUrl, array $message): array
     {
+        if (!self::validateWebhookUrl($webhookUrl, ['hooks.slack.com'])) {
+            return ['success' => false, 'response_code' => 0, 'message' => 'Invalid Slack webhook URL'];
+        }
         $body = json_encode($message, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         if ($body === false) {
             return ['success' => false, 'response_code' => 0, 'message' => 'Failed to encode message'];
@@ -66,6 +69,7 @@ final class SlackClient
                     CURLOPT_TIMEOUT => $this->timeout,
                     CURLOPT_CONNECTTIMEOUT => 5,
                     CURLOPT_FOLLOWLOCATION => false,
+                    CURLOPT_PROTOCOLS => CURLPROTO_HTTPS,
                     CURLOPT_SSL_VERIFYPEER => true,
                     CURLOPT_SSL_VERIFYHOST => 2,
                 ]);
@@ -81,6 +85,8 @@ final class SlackClient
                     'content' => $body,
                     'timeout' => $this->timeout,
                     'ignore_errors' => true,
+                    'follow_location' => 0,
+                    'max_redirects' => 0,
                 ],
                 'ssl' => ['verify_peer' => true, 'verify_peer_name' => true],
             ]);

@@ -15,13 +15,21 @@ final class SlackController
 {
     private PDO $pdo;
     private SlackRepository $repo;
+    private int $organizationId = 0;
     /** @var array<int, string> */
     private array $allowedHosts;
 
     public function __construct(private readonly Container $container)
     {
         $this->pdo = $container->get('db.pdo');
-        $this->repo = new SlackRepository($this->pdo);
+        $auth = $container->has('auth_user') ? $container->get('auth_user') : [];
+        $actor = is_array($auth['user'] ?? null) ? $auth['user'] : [];
+        $organizationContext = $container->get('service.organization_context')->resolve($container->get('request'), $actor);
+        $organizationId = ($organizationContext['status'] ?? '') === 'active'
+            ? (int)($organizationContext['organization']['id'] ?? 0)
+            : 0;
+        $this->organizationId = $organizationId;
+        $this->repo = new SlackRepository($this->pdo, $organizationId);
         $this->allowedHosts = ['hooks.slack.com'];
     }
 
@@ -115,6 +123,7 @@ final class SlackController
 
     public function createConnection(): JsonResponse
     {
+        if ($this->organizationId <= 0) return JsonResponse::error('ORGANIZATION_REQUIRED', 'Active workspace required', 403);
         if (!$this->hasPermission('module.slack-integration.manage') || !$this->hasPermission('module.slack-integration.secret_manage')) {
             return JsonResponse::error('FORBIDDEN', 'Insufficient permissions', 403);
         }
@@ -263,6 +272,7 @@ final class SlackController
 
     public function createRule(): JsonResponse
     {
+        if ($this->organizationId <= 0) return JsonResponse::error('ORGANIZATION_REQUIRED', 'Active workspace required', 403);
         if (!$this->hasPermission('module.slack-integration.manage')) {
             return JsonResponse::error('FORBIDDEN', 'Insufficient permissions', 403);
         }
@@ -319,6 +329,13 @@ final class SlackController
         $connectionPublicId = trim((string)($query['connection_public_id'] ?? $body['connection_public_id'] ?? ''));
         $rulePublicId = trim((string)($query['rule_public_id'] ?? $body['rule_public_id'] ?? ''));
         $eventCode = trim((string)($query['event_code'] ?? $body['event'] ?? ''));
+        $organizationPublicId = trim((string)($query['organization_public_id'] ?? $body['organization_public_id'] ?? ''));
+        if ($organizationPublicId === '') { return JsonResponse::error('ORGANIZATION_REQUIRED', 'Workspace is required', 403); }
+        $orgStmt = $this->pdo->prepare('SELECT id FROM organizations WHERE public_id = :public_id LIMIT 1');
+        $orgStmt->execute(['public_id' => $organizationPublicId]);
+        $organizationId = (int)($orgStmt->fetchColumn() ?: 0);
+        if ($organizationId <= 0) { return JsonResponse::error('NOT_FOUND', 'Workspace not found', 404); }
+        $this->repo = new SlackRepository($this->pdo, $organizationId);
         $directText = (string)($body['text'] ?? '');
 
         $connection = null;

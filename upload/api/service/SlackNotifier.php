@@ -50,14 +50,16 @@ final class SlackNotifier
             $codes[] = self::EVENT_ALIASES[$event];
         }
 
-        $repo = new SlackRepository($this->pdo);
+        $organizationId = (int)($context['organization_id'] ?? 0);
+        if ($organizationId <= 0) { return 0; }
+        $repo = new SlackRepository($this->pdo, $organizationId);
         $rules = $repo->listEnabledRulesByEvent($codes);
         if ($rules === []) {
             return 0;
         }
 
         // Resolve labels only when at least one rule matched (avoids idle queries).
-        $context = $this->resolveLabels($context);
+        $context = $this->resolveLabels($context, $organizationId);
 
         $enqueued = 0;
         foreach ($rules as $rule) {
@@ -126,30 +128,30 @@ final class SlackNotifier
      * @param array<string, mixed> $context
      * @return array<string, mixed>
      */
-    public function resolveLabels(array $context): array
+    public function resolveLabels(array $context, int $organizationId): array
     {
         if (!isset($context['task_title']) && !empty($context['task_public_id'])) {
             $context['task_title'] = $this->scalar(
-                'SELECT title FROM tasks WHERE public_id = ?',
-                [(string)$context['task_public_id']]
+                'SELECT title FROM tasks WHERE public_id = ? AND organization_id = ?',
+                [(string)$context['task_public_id'], $organizationId]
             );
         }
         if (!isset($context['project_title']) && !empty($context['project_public_id'])) {
             $context['project_title'] = $this->scalar(
-                'SELECT title FROM projects WHERE public_id = ?',
-                [(string)$context['project_public_id']]
+                'SELECT title FROM projects WHERE public_id = ? AND organization_id = ?',
+                [(string)$context['project_public_id'], $organizationId]
             );
         }
         if (!isset($context['comment_body']) && !empty($context['comment_public_id'])) {
             $context['comment_body'] = $this->scalar(
-                'SELECT body FROM comments WHERE public_id = ?',
-                [(string)$context['comment_public_id']]
+                'SELECT body FROM comments WHERE public_id = ? AND organization_id = ?',
+                [(string)$context['comment_public_id'], $organizationId]
             );
         }
         if (!isset($context['file_name']) && !empty($context['file_public_id'])) {
             $context['file_name'] = $this->scalar(
-                'SELECT original_name FROM files WHERE public_id = ?',
-                [(string)$context['file_public_id']]
+                'SELECT original_name FROM files WHERE public_id = ? AND organization_id = ?',
+                [(string)$context['file_public_id'], $organizationId]
             );
         }
 
@@ -164,8 +166,8 @@ final class SlackNotifier
             $uid = (int)($context[$idField] ?? 0);
             if ($uid > 0 && !isset($context[$nameField])) {
                 $context[$nameField] = $this->scalar(
-                    'SELECT full_name FROM users WHERE id = ?',
-                    [$uid]
+                    'SELECT u.full_name FROM users u JOIN organization_memberships om ON om.user_id = u.id WHERE u.id = ? AND om.organization_id = ?',
+                    [$uid, $organizationId]
                 );
             }
         }

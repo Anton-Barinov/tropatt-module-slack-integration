@@ -1,6 +1,6 @@
 {
     "name": "crm.slack-integration",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "vendor": "crm",
     "author": "Anton Barinov",
     "author_url": "https://github.com/Anton-Barinov",
@@ -10,7 +10,9 @@
     "license": "MIT",
     "category": "integration",
     "dependencies": [],
-    "require_permissions": ["workflow.manage"],
+    "require_permissions": [
+        "workflow.manage"
+    ],
     "api_routes": "api/config/routes.php",
     "web_routes": "web/config/routes.php",
     "migrations": "api/migration/",
@@ -18,15 +20,20 @@
         "js_routes": {
             "module-slack-integration": "web/assets/js/slack.js"
         },
-        "css": ["web/assets/css/slack.css"]
+        "css": [
+            "web/assets/css/slack.css"
+        ]
     },
-    "hooks": {},
+    "hooks": [],
     "menu_items": [],
     "service_provider": "Module\\Crm\\SlackIntegration\\SlackServiceProvider",
     "config_defaults": {
         "request_timeout_seconds": 10,
         "max_retries": 3,
         "retry_backoff_seconds": 30,
-        "allowed_webhook_hosts": ["hooks.slack.com"]
-    }
+        "allowed_webhook_hosts": [
+            "hooks.slack.com"
+        ]
+    },
+    "signature": "a73ee8cd38f78d212f5e4130701584ef472d3300984abef95e37681b5722d0ee"
 }
